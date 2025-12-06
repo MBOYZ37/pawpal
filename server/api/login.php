@@ -1,6 +1,6 @@
 <?php
     header("Access-Control-Allow-Origin: *");
-	include 'dbconnect.php';
+	include_once'dbconnect.php';
 
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if (!isset($_POST['email']) || !isset($_POST['password'])) {
