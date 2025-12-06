@@ -1,91 +1,42 @@
-# pawpal
+# 🐾 PawPal
 
-Pet Adoption & Donation App
+App for the animal lover <3
 
-## Table of Contents
-- [Setup](#setup)
-- [API Explainantion](#api-explainantion)
-- [Sample JSON Response](#sample-json-response)
+## 🛠️ Setup 
 
-## Setup
+1.  **Dependencies:** Run `flutter pub get`.
+2.  **Server:** Install and start **XAMPP**.
+3.  **Database:** Import `pawpal_db.sql`.
+4.  **API Files:** Copy `API` and `uploads` folders to XAMPP root (`htdocs`).
+5.  **Config:** Update IP address in `myconfig.dart`.
+6.  **Run:** Start the `main.dart` file.
 
-### 1. Install the dependencies
-To install the dependencies, run the following command:
+---
 
-```bash
-flutter pub get
-```
-### 2. Install Xampp
-### 3. Import the database pawpal_db.sql into Xampp
-### 4. Copy API folder to Xampp
-### 5. Copy uploads folder to Xampp
-### 6. Change IP Address at myconfig.dart
-### 5. Run the main.dart file
+## 🌐 API Endpoints
 
+| File | Purpose |
+| :--- | :--- |
+| **`dbconnect.php`** | Connects to DB. |
+| **`login.php`** | User Login. |
+| **`register_user.php`** | User Registration. |
+| **`get_my_pets.php`** | Loads/Searches pets. |
+| **`submit_pets.php`** | Adds new pets/images. |
 
-## API Explainantion
-### 1. dbconnect.php
-to handle database connection
+---
 
-### 2. login.php
-to handle user login and authentication 
+## 💻 Sample Responses
 
-### 3. register_user.php    
-to handle user registration and ecryption of password and check email already registered or not.
+### 1. Pet List (`get_my_pets.php`)
 
-### 4. get_my_pets.php
-to load everything about pets and load pets based on search query
+| Status | Meaning | Data Example |
+| :--- | :--- | :--- |
+| `"success"` | Pet data returned. | `{"status": "success", "data": [{"pet_id": "3", ...}]}` |
+| `"failed"` | No pets found. | `{"status": "failed", "data": []}` |
 
-### 5. submit_pets.php
-to handle submissions of the pets and images of the pets
+### 2. Pet Submission (`submit_pets.php`)
 
-
-## Sample JSON Response
-### Example of JSON Response for get_my_pets.php
-#### ✅ 1. Success Response (With Data)
-```json
-{
-  "status": "success",
-  "data": [
-    {
-      "pet_id": "3",
-      "user_id": "7",
-      "pet_name": "Oyen",
-      "pet_type": "Cat",
-      "category": "Lost",
-      "description": "Cute and have black neck collar with engrave named 'Oyen'",
-      "images_path": "uploads/pets_12_1.png,uploads/pets_12_2.png",
-      "lat": "6.4469995",
-      "lng": "100.5116055",
-      "created_at": "2025-12-06 16:37:19",
-      "name": "Haziq",
-      "email": "haziqhaikal@gmail.com",
-      "phone": "0111111111",
-      "reg_date": "2024-12-01 11:37:05"
-    }
-  ]
-}
-```    
-#### ✅ 2. Success Response (But No Results Found)
-```json
-{
-    
-  "status": "failed",
-  "data": []
-}
-```
-### Example of JSON Response for submit_pets.php
-#### ✅ 1. Success Response
-```json
-{
-  "status": "success",
-  "message": "Pet added successfully"
-}
-```
-#### ❌ 2. Failed Response
-```json
-{
-  "status": "failed",
-  "message": "No images provided"
-}
-```
+| Status | Message | Example |
+| :--- | :--- | :--- |
+| `"success"` | Pet added successfully. | `{"status": "success", "message": "Pet added successfully"}` |
+| `"failed"` | Error (e.g., missing images). | `{"status": "failed", "message": "No images provided"}` |
