@@ -18,7 +18,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   List<Pet> petList = [];
-  String status = "Loading...";
+  late String status;
   late double screenWidth, screenHeight;
 
   @override
@@ -31,46 +31,75 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     screenWidth = MediaQuery.of(context).size.width;
     screenHeight = MediaQuery.of(context).size.height;
+
     if (screenWidth > 600) {
       screenWidth = 600;
-    } else {
-      screenWidth = screenWidth;
     }
 
     return Scaffold(
-      backgroundColor: Colors.grey[300],
+      backgroundColor: Colors.grey[200],
       appBar: AppBar(
         title: Text(
           'Paw Pal',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+            letterSpacing: 1.2,
+          ),
         ),
+        elevation: 6,
+        centerTitle: true,
         backgroundColor: const Color.fromARGB(255, 177, 177, 177),
         iconTheme: IconThemeData(color: Colors.white),
         actions: [
           IconButton(
-            icon: Icon(Icons.search),
-            onPressed: () {
-              showSearchDialog();
-            },
+            tooltip: 'Search',
+            icon: Icon(Icons.search_rounded),
+            onPressed: () => showSearchDialog(),
           ),
           IconButton(
-            onPressed: () {
-              loadPets('');
-            },
-            icon: Icon(Icons.refresh),
+            tooltip: 'Refresh',
+            icon: Icon(Icons.refresh_rounded),
+            onPressed: () => loadPets(''),
           ),
-
           IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => LogInScreen()),
+            tooltip: 'Logout',
+            icon: Icon(Icons.logout_rounded),
+            onPressed: () async {
+              bool? confirm = await showDialog<bool>(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: Text("Confirm Logout"),
+                    content: Text("Are you sure you want to logout?"),
+                    actions: [
+                      TextButton(
+                        child: Text("Cancel"),
+                        onPressed: () => Navigator.pop(context, false),
+                      ),
+                      TextButton(
+                        child: Text("Logout"),
+                        onPressed: () => Navigator.pop(context, true),
+                      ),
+                    ],
+                  );
+                },
               );
+
+              if (confirm == true) {
+                if (context.mounted) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => LogInScreen()),
+                  );
+                }
+              }
             },
-            icon: Icon(Icons.login),
           ),
         ],
       ),
+
       body: Center(
         child: SizedBox(
           width: screenWidth,
@@ -82,12 +111,15 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.find_in_page_outlined, size: 64),
-                            SizedBox(height: 12),
+                            Icon(Icons.pets, size: 72, color: Colors.grey[600]),
+                            SizedBox(height: 16),
                             Text(
                               status,
                               textAlign: TextAlign.center,
-                              style: TextStyle(fontSize: 18),
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.black87,
+                              ),
                             ),
                           ],
                         ),
@@ -95,95 +127,84 @@ class _HomeScreenState extends State<HomeScreen> {
                     )
                   : Expanded(
                       child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
                         itemCount: petList.length,
-                        itemBuilder: (BuildContext context, int index) {
+                        itemBuilder: (context, index) {
                           return Card(
-                            color: Colors.cyan[100],
-                            elevation: 4,
+                            elevation: 5,
                             margin: const EdgeInsets.symmetric(
-                              vertical: 6,
-                              horizontal: 8,
+                              horizontal: 10,
+                              vertical: 8,
                             ),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(14),
                             ),
+                            color: const Color.fromARGB(255,237,143,62,).withValues(alpha: 240),
                             child: Padding(
-                              padding: const EdgeInsets.all(10),
+                              padding: const EdgeInsets.all(12),
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // IMAGE
                                   ClipRRect(
                                     borderRadius: BorderRadius.circular(12),
                                     child: Container(
-                                      width:
-                                          screenWidth * 0.28, // more responsive
-                                      height:
-                                          screenWidth *
-                                          0.22, // balanced aspect ratio
-                                      color: Colors.grey[200],
+                                      width: screenWidth * 0.26,
+                                      height: screenWidth * 0.22,
+                                      color: Colors.grey[300],
                                       child: Image.network(
-                                        // path to retrieve image from server
                                         '${MyConfig.baseUrl}/pawpal/${petList[index].imagesPath[0]}',
                                         fit: BoxFit.cover,
-                                        errorBuilder:
-                                            (context, error, stackTrace) {
-                                              return const Icon(
-                                                Icons.broken_image,
-                                                size: 60,
-                                                color: Colors.grey,
-                                              );
-                                            },
+                                        errorBuilder: (c, e, s) => Icon(
+                                          Icons.broken_image,
+                                          size: 50,
+                                          color: Colors.grey,
+                                        ),
                                       ),
                                     ),
                                   ),
 
-                                  const SizedBox(width: 12),
+                                  SizedBox(width: 14),
 
-                                  // TEXT AREA
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        // TITLE
                                         Text(
                                           petList[index].petName.toString(),
-                                          style: const TextStyle(
-                                            fontSize: 17,
-                                            fontWeight: FontWeight.w600,
-                                          ),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black87,
+                                          ),
                                         ),
 
-                                        const SizedBox(height: 4),
+                                        SizedBox(height: 6),
 
-                                        // DESCRIPTION
                                         Text(
                                           petList[index].description.toString(),
-                                          style: const TextStyle(
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
                                             fontSize: 14,
                                             color: Colors.black87,
                                           ),
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
                                         ),
 
-                                        const SizedBox(height: 6),
+                                        SizedBox(height: 10),
 
                                         Row(
                                           children: [
-                                            // Category Badge
                                             Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 8,
-                                                    vertical: 4,
-                                                  ),
+                                              padding: EdgeInsets.symmetric(
+                                                horizontal: 8,
+                                                vertical: 4,
+                                              ),
                                               decoration: BoxDecoration(
-                                                color: Colors.black.withOpacity(
-                                                  0.15,
+                                                color: Colors.white.withValues(
+                                                  alpha: 200,
                                                 ),
                                                 borderRadius:
                                                     BorderRadius.circular(8),
@@ -191,30 +212,23 @@ class _HomeScreenState extends State<HomeScreen> {
                                               child: Text(
                                                 petList[index].category
                                                     .toString(),
-                                                style: const TextStyle(
-                                                  fontSize: 15,
-                                                  color: Color.fromARGB(
-                                                    255,
-                                                    1,
-                                                    1,
-                                                    1,
-                                                  ),
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  color: Colors.black87,
                                                 ),
                                               ),
                                             ),
 
-                                            const SizedBox(width: 10),
+                                            SizedBox(width: 10),
 
-                                            // Pet Type Badge
                                             Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 8,
-                                                    vertical: 4,
-                                                  ),
+                                              padding: EdgeInsets.symmetric(
+                                                horizontal: 8,
+                                                vertical: 4,
+                                              ),
                                               decoration: BoxDecoration(
-                                                color: Colors.black.withOpacity(
-                                                  0.15,
+                                                color: Colors.white.withValues(
+                                                  alpha: 200,
                                                 ),
                                                 borderRadius:
                                                     BorderRadius.circular(8),
@@ -222,9 +236,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                               child: Text(
                                                 petList[index].petType
                                                     .toString(),
-                                                style: const TextStyle(
-                                                  fontSize: 15,
-                                                  color: Colors.black,
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  color: Colors.black87,
                                                 ),
                                               ),
                                             ),
@@ -244,31 +258,21 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
+
       floatingActionButton: FloatingActionButton(
+        backgroundColor: const Color.fromARGB(255, 237, 143, 62),
+        elevation: 5,
+        child: Icon(Icons.add, color: const Color.fromARGB(255, 255, 255, 255)),
+        tooltip: 'Add Pet',
         onPressed: () async {
-          // Action for the button
-          if (widget.user?.userId == '0') {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text("Please login first/or register first"),
-                backgroundColor: Colors.red,
-              ),
-            );
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const LogInScreen()),
-            );
-          } else {
-            await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => SubmitPetScreen(user: widget.user),
-              ),
-            );
-            loadPets('');
-          }
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => SubmitPetScreen(user: widget.user),
+            ),
+          );
+          loadPets('');
         },
-        child: Icon(Icons.add),
       ),
     );
   }
@@ -312,13 +316,12 @@ class _HomeScreenState extends State<HomeScreen> {
   void loadPets(String searchQuery) {
     petList.clear();
     setState(() {
-      status = "Loading...";
+      status = "Waiting for response...";
     });
 
     http
         .get(
           Uri.parse(
-            //api path to get pets
             '${MyConfig.baseUrl}/pawpal/API/get_my_pets.php?search=$searchQuery',
           ),
         )

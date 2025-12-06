@@ -40,7 +40,7 @@ class Pet {
     description = json['description'];
     imagesPath = json['images_path'] != null
         ? json['images_path'].toString().split(",")
-        : []; // <---- FIX here, always safe
+        : [];
     lat = json['lat'];
     lng = json['lng'];
     createdAt = json['created_at'];
