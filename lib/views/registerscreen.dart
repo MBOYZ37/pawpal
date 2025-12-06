@@ -247,7 +247,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
 
     await http.post(
-      Uri.parse("${MyConfig.baseUrl}/pawpal/api/register_user.php"),
+      Uri.parse("${MyConfig.baseUrl}/pawpal/api/register.php"),
       body: {
         'email': email,
         'password': password,

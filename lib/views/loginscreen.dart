@@ -223,7 +223,7 @@ class _LogInScreenState extends State<LogInScreen> {
     }
 
     await http.post(
-      Uri.parse('${MyConfig.baseUrl}/pawpal/api/login_user.php'),
+      Uri.parse('${MyConfig.baseUrl}/pawpal/api/login.php'),
       body: {
         'email': email,
         'password': password,

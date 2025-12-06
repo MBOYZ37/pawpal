@@ -262,7 +262,6 @@ class _HomeScreenState extends State<HomeScreen> {
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color.fromARGB(255, 237, 143, 62),
         elevation: 5,
-        child: Icon(Icons.add, color: const Color.fromARGB(255, 255, 255, 255)),
         tooltip: 'Add Pet',
         onPressed: () async {
           await Navigator.push(
@@ -273,6 +272,7 @@ class _HomeScreenState extends State<HomeScreen> {
           );
           loadPets('');
         },
+        child: Icon(Icons.add, color: const Color.fromARGB(255, 255, 255, 255)),
       ),
     );
   }
@@ -322,7 +322,7 @@ class _HomeScreenState extends State<HomeScreen> {
     http
         .get(
           Uri.parse(
-            '${MyConfig.baseUrl}/pawpal/API/get_my_pets.php?search=$searchQuery',
+            '${MyConfig.baseUrl}/pawpal/api/get_my_pets.php?search=$searchQuery',
           ),
         )
         .then((response) {
