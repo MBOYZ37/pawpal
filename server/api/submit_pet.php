@@ -1,69 +1,59 @@
 <?php
 header("Access-Control-Allow-Origin: *");
-include 'dbconnect.php';
+header('Content-Type: application/json');
 
-if ($_SERVER['REQUEST_METHOD'] != 'POST') {
-    http_response_code(405);
-    echo json_encode(array('error' => 'Method Not Allowed'));
-    exit();
-}
+include_once 'dbconnect.php';
 
-$user_id     = $_POST['user_id'];
-$pet_name    = addslashes($_POST['pet_name']);
-$pet_type    = $_POST['pet_type'];
-$category    = $_POST['category'];
-$description = addslashes($_POST['description']);
-$lat         = $_POST['lat'];
-$lng         = $_POST['lng'];
+$response = array();
 
-// Decode JSON array of images
-$imagesArray = json_decode($_POST['images'], true);
+if (isset($_POST['user_id'], $_POST['pet_name'], $_POST['pet_type'], $_POST['category'], $_POST['description'], $_POST['images'], $_POST['lat'], $_POST['lng'])) {
 
-if (!is_array($imagesArray) || count($imagesArray) == 0) {
-    sendJsonResponse(array('status' => 'failed', 'message' => 'No images provided'));
-    exit();
-}
+    $user_id = $_POST['user_id'];
+    $pet_name = $_POST['pet_name'];
+    $pet_type = $_POST['pet_type'];
+    $category = $_POST['category'];
+    $description = $_POST['description'];
+    $images_json = $_POST['images'];
+    $lat = $_POST['lat'];
+    $lng = $_POST['lng'];
 
-// Insert new pet into database without image first
-$sqlinsertpets = "INSERT INTO tbl_pets(user_id, pet_name, pet_type, category, description, lat, lng) 
-                  VALUES ('$user_id','$pet_name','$pet_type','$category','$description','$lat','$lng')";
+    $image_paths = array();
 
-try {
-    if ($conn->query($sqlinsertpets) === TRUE) {
+    $images = json_decode($images_json, true);
+    if ($images && count($images) > 0) {
+        foreach ($images as $index => $img) {
+            $img_data = base64_decode($img);
+            $filename = 'images/' . uniqid('pet_') . '.png';
+            
+            if (!file_exists('images')) {
+                mkdir('images', 0777, true);
+            }
 
-        // Get last inserted pet ID
-        $last_id = $conn->insert_id;
-
-        $savedImagePaths = [];
-
-        foreach ($imagesArray as $index => $encodedimage) {
-            $decodedImage = base64_decode($encodedimage);
-            $imagepath = "../uploads/pets_" . $last_id . "_" . ($index + 1) . ".png";
-            file_put_contents($imagepath, $decodedImage);
-            $savedImagePaths[] = "uploads/pets_" . $last_id . "_" . ($index + 1) . ".png";
+            if (file_put_contents($filename, $img_data)) {
+                $image_paths[] = $filename;
+            }
         }
-
-        // Save all image paths in DB as comma-separated
-        $imagesPathString = implode(",", $savedImagePaths);
-
-        $sqlupdate = "UPDATE tbl_pets SET images_path = '$imagesPathString' WHERE pet_id = '$last_id'";
-        $conn->query($sqlupdate);
-
-        $response = array('status' => 'success', 'message' => 'Pet added successfully');
-        sendJsonResponse($response);
-
-    } else {
-        $response = array('status' => 'failed', 'message' => 'Pet not added');
-        sendJsonResponse($response);
     }
-} catch (Exception $e) {
-    $response = array('status' => 'failed', 'message' => $e->getMessage());
-    sendJsonResponse($response);
+
+    $images_str = json_encode($image_paths);
+
+    $stmt = $conn->prepare("INSERT INTO pets (user_id, pet_name, pet_type, category, description, images, lat, lng) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("isssssss", $user_id, $pet_name, $pet_type, $category, $description, $images_str, $lat, $lng);
+
+    if ($stmt->execute()) {
+        $response['status'] = 'success';
+        $response['message'] = 'Pet submitted successfully';
+    } else {
+        $response['status'] = 'error';
+        $response['message'] = 'Failed to submit pet: ' . $stmt->error;
+    }
+
+    $stmt->close();
+
+} else {
+    $response['status'] = 'error';
+    $response['message'] = 'Incomplete data';
 }
 
-function sendJsonResponse($sentArray)
-{
-    header('Content-Type: application/json');
-    echo json_encode($sentArray);
-}
+echo json_encode($response);
 ?>

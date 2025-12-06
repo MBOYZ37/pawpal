@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:pawpal/views/homescreen.dart';
 import 'package:pawpal/views/loginscreen.dart';
 
 class SplashScreen extends StatefulWidget {
