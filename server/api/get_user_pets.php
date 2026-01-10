@@ -4,7 +4,8 @@ header("Content-Type: application/json");
 include_once 'dbconnect.php';
 
 if ($_SERVER['REQUEST_METHOD'] == 'GET') {
-    
+    $userid = $_GET['userid']; 
+
     $query = "
         SELECT 
             p.pet_id, 
@@ -13,30 +14,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
             p.pet_type, 
             p.category, 
             p.description, 
-            p.images as images_path,  
+            p.images as images_path, 
             p.lat, 
             p.lng, 
             p.created_at,
-            u.name,       
+            u.name, 
             u.email, 
             u.phone, 
-            u.reg_date    
+            u.reg_date
         FROM tbl_pets p
         JOIN tbl_users u ON p.user_id = u.user_id
-        WHERE 1=1 
+        WHERE p.user_id = '$userid'
+        ORDER BY p.pet_id DESC
     ";
-
-    if (isset($_GET['search']) && !empty($_GET['search'])) {
-        $search = $conn->real_escape_string($_GET['search']);
-        $query .= " AND (p.pet_name LIKE '%$search%' OR p.pet_type LIKE '%$search%' OR p.description LIKE '%$search%')";
-    }
-
-    if (isset($_GET['category']) && !empty($_GET['category']) && $_GET['category'] != 'All') {
-        $category = $conn->real_escape_string($_GET['category']);
-        $query .= " AND p.pet_type = '$category'";
-    }
-
-    $query .= " ORDER BY p.pet_id DESC";
 
     $result = $conn->query($query);
 

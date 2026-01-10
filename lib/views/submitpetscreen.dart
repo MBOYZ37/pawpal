@@ -44,8 +44,8 @@ class _SubmitPetScreenState extends State<SubmitPetScreen> {
   String selectedPet = 'Cat';
   String selectedCategory = 'Adoption';
 
-  List<File> images = []; // Mobile
-  List<Uint8List> webImages = []; // Web
+  List<File> images = [];
+  List<Uint8List> webImages = [];
 
   late Position myPosition;
   late double width, height;
@@ -127,7 +127,6 @@ class _SubmitPetScreenState extends State<SubmitPetScreen> {
                 ),
               ),
               const SizedBox(height: 14),
-              // LATITUDE FIELD
               SizedBox(
                 width: width * 0.9,
                 child: TextField(
@@ -137,24 +136,23 @@ class _SubmitPetScreenState extends State<SubmitPetScreen> {
                     suffixIcon: IconButton(
                       icon: const Icon(Icons.location_on, color: Colors.orange),
                       tooltip: "Get Current Location",
-                      onPressed: _getLocation, // Calls the helper function below
+                      onPressed: _getLocation,
                     ),
                   ),
                 ),
               ),
               const SizedBox(height: 14),
 
-              // LONGITUDE FIELD
               SizedBox(
                 width: width * 0.9,
                 child: TextField(
                   controller: lngController,
-                  readOnly: true, // Make it read-only so user must use the button
+                  readOnly: true,
                   decoration: _styledInput("Longitude").copyWith(
                     suffixIcon: IconButton(
                       icon: const Icon(Icons.location_on, color: Colors.orange),
                       tooltip: "Get Current Location",
-                      onPressed: _getLocation, // Calls the helper function below
+                      onPressed: _getLocation,
                     ),
                   ),
                 ),
@@ -412,8 +410,7 @@ class _SubmitPetScreenState extends State<SubmitPetScreen> {
 
   void submitPets() {
     List<String> base64Images = [];
-    
-    // 1. Convert images based on platform
+
     if (kIsWeb) {
       for (var bytes in webImages) {
         base64Images.add(base64Encode(bytes));
@@ -424,14 +421,13 @@ class _SubmitPetScreenState extends State<SubmitPetScreen> {
       }
     }
 
-    // 2. Show Loading Dialog
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (c) => const Center(child: CircularProgressIndicator()),
     );
 
-    print("Submitting to: ${MyConfig.baseUrl}/pawpal/api/submit_pet.php"); // DEBUG PRINT
+    print("Submitting to: ${MyConfig.baseUrl}/pawpal/api/submit_pet.php"); 
 
     http.post(
       Uri.parse('${MyConfig.baseUrl}/pawpal/api/submit_pet.php'),
@@ -442,14 +438,14 @@ class _SubmitPetScreenState extends State<SubmitPetScreen> {
         'category': selectedCategory,
         'description': descriptionController.text.trim(),
         'images': jsonEncode(base64Images),
-        'lat': latController.text.trim().isEmpty ? "0.0" : latController.text.trim(), // Default to 0.0 if empty
+        'lat': latController.text.trim().isEmpty ? "0.0" : latController.text.trim(),
         'lng': lngController.text.trim().isEmpty ? "0.0" : lngController.text.trim(),
       },
     ).then((response) {
-      Navigator.pop(context); // Close Loading Dialog
+      Navigator.pop(context);
       
-      print("Response Status: ${response.statusCode}"); // DEBUG PRINT
-      print("Response Body: ${response.body}"); // DEBUG PRINT
+      print("Response Status: ${response.statusCode}");
+      print("Response Body: ${response.body}");
 
       if (response.statusCode == 200) {
         var res = jsonDecode(response.body);
@@ -461,7 +457,7 @@ class _SubmitPetScreenState extends State<SubmitPetScreen> {
                 backgroundColor: Colors.green,
               ),
             );
-            Navigator.pop(context); // Go back to Home
+            Navigator.pop(context);
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(res['message'] ?? "Unknown Error"), backgroundColor: Colors.red),
@@ -474,8 +470,8 @@ class _SubmitPetScreenState extends State<SubmitPetScreen> {
         );
       }
     }).catchError((error) {
-      Navigator.pop(context); // Close Loading Dialog
-      print("Error: $error"); // DEBUG PRINT
+      Navigator.pop(context);
+      print("Error: $error");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Connection Failed: $error"), backgroundColor: Colors.red),
       );
@@ -486,13 +482,11 @@ class _SubmitPetScreenState extends State<SubmitPetScreen> {
     bool serviceEnabled;
     LocationPermission permission;
 
-    // 1. Check if location services are enabled
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       return Future.error('Location services are disabled. Please enable GPS.');
     }
 
-    // 2. Check permissions
     permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
@@ -506,7 +500,6 @@ class _SubmitPetScreenState extends State<SubmitPetScreen> {
           'Location permissions are permanently denied. Please allow location in your browser settings.');
     }
 
-    // 3. Get Position (with Web Settings for better compatibility)
     return await Geolocator.getCurrentPosition(
       locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.high,
@@ -516,7 +509,6 @@ class _SubmitPetScreenState extends State<SubmitPetScreen> {
 
   void _getLocation() async {
     try {
-      // Show loading indicator
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Getting location...")),
       );

@@ -330,7 +330,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (isLoading) {
       if (!mounted) return;
-      Navigator.pop(context); // Close the loading dialog
+      Navigator.pop(context);
       setState(() {
         isLoading = false;
       });

@@ -16,8 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $pet_type = $_POST['pet_type'];
     $category = $_POST['category'];
     $description = $_POST['description'];
-    
-    // We use a prepared statement for security
+
     $sql = "UPDATE tbl_pets SET pet_name = ?, pet_type = ?, category = ?, description = ? WHERE pet_id = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("sssss", $pet_name, $pet_type, $category, $description, $pet_id);

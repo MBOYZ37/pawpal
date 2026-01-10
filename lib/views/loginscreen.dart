@@ -180,7 +180,6 @@ class _LogInScreenState extends State<LogInScreen> {
         passwordController.text = password ?? '';
         isChecked = true;
         setState(() {});
-        loginUser();
       }
     });
   }

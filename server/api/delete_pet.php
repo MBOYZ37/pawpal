@@ -14,9 +14,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['pet_id'])) {
         $pet_id = $_POST['pet_id'];
         
-        // Optional: Check if the user asking to delete is actually the owner
-        // For now, we will trust the app logic
-        
         $sql = "DELETE FROM tbl_pets WHERE pet_id = '$pet_id'";
         if ($conn->query($sql) === TRUE) {
             echo json_encode(array("status" => "success", "message" => "Pet deleted successfully"));

@@ -6,6 +6,8 @@ import 'package:pawpal/models/user.dart';
 import 'package:pawpal/myconfig.dart';
 import 'package:pawpal/views/loginscreen.dart';
 import 'package:pawpal/views/submitpetscreen.dart';
+import 'package:pawpal/views/petdetailscreen.dart';
+import 'package:pawpal/shared/mydrawer.dart';
 
 class HomeScreen extends StatefulWidget {
   final User? user;
@@ -17,13 +19,21 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   List<Pet> petList = [];
-  String status = "Loading..."; // Initial status
+  String status = "Loading...";
   late double screenWidth, screenHeight;
 
-  // --- NEW: Filter Variables ---
-  List<String> petTypes = ["All", "Cat", "Dog", "Bird", "Other"];
+  List<String> petTypes = [
+    'All',
+    'Cat',
+    'Dog',
+    'Bird',
+    'Rabbit',
+    'Fish',
+    'Hamster',
+    'Reptile',
+    'Other',
+  ];
   String selectedType = "All";
-  // -----------------------------
 
   @override
   void initState() {
@@ -42,6 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: Colors.grey[200],
+      drawer: MyDrawer(user: widget.user!),
       appBar: AppBar(
         title: const Text(
           'Paw Pal',
@@ -110,7 +121,6 @@ class _HomeScreenState extends State<HomeScreen> {
           width: screenWidth,
           child: Column(
             children: [
-              // --- NEW: Filter UI Section ---
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
@@ -129,7 +139,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     DropdownButton<String>(
                       value: selectedType,
-                      underline: Container(), // Hides the default underline
+                      underline: Container(),
                       icon: const Icon(Icons.filter_list),
                       items: petTypes.map((String type) {
                         return DropdownMenuItem<String>(
@@ -140,7 +150,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       onChanged: (String? newValue) {
                         setState(() {
                           selectedType = newValue!;
-                          loadPets(''); // Reload list with new filter
+                          loadPets('');
                         });
                       },
                     ),
@@ -148,7 +158,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
 
-              // ------------------------------
               petList.isEmpty
                   ? Expanded(
                       child: Center(
@@ -183,7 +192,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),
                             ),
-                            // Using standard color opacity for compatibility
                             color: const Color.fromARGB(
                               255,
                               237,
@@ -191,9 +199,16 @@ class _HomeScreenState extends State<HomeScreen> {
                               62,
                             ).withOpacity(0.94),
                             child: InkWell(
-                              // Placeholder for navigation to details page later
                               onTap: () {
-                                // Navigator.push(...)
+                                Navigator.push(
+                                   context, 
+                                   MaterialPageRoute(
+                                       builder: (context) => PetDetailsScreen(
+                                           pet: petList[index], 
+                                           user: widget.user
+                                       )
+                                   )
+                               );
                               },
                               child: Padding(
                                 padding: const EdgeInsets.all(12),
@@ -347,7 +362,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: const Text('Search'),
               onPressed: () {
                 String search = searchController.text;
-                loadPets(search); // Call loadPets with the search text
+                loadPets(search);
                 Navigator.of(context).pop();
               },
             ),
@@ -363,10 +378,8 @@ class _HomeScreenState extends State<HomeScreen> {
       status = "Waiting for response...";
     });
 
-    // --- NEW: Include category in the URL ---
     String url =
         '${MyConfig.baseUrl}/pawpal/api/get_my_pets.php?search=$searchQuery&category=$selectedType';
-    // ----------------------------------------
 
     http.get(Uri.parse(url)).then((response) {
       if (response.statusCode == 200) {
