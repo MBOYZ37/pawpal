@@ -5,35 +5,41 @@ include_once 'dbconnect.php';
 
 if ($_SERVER['REQUEST_METHOD'] == 'GET') {
 
-    //join query to fetch pet and user details
+    // QUERY UPDATED TO MATCH YOUR ACTUAL DB COLUMNS
+    // tbl_users columns: user_id, name, email, phone, reg_date
+    // tbl_pets columns:  pet_id, images, etc.
+    
     $query = "
         SELECT 
-            p.pet_id,
-            p.user_id,
-            p.pet_name,
-            p.pet_type,
-            p.category,
-            p.description,
-            p.images_path,
-            p.lat,
-            p.lng,
+            p.pet_id, 
+            p.user_id, 
+            p.pet_name, 
+            p.pet_type, 
+            p.category, 
+            p.description, 
+            p.images as images_path,  
+            p.lat, 
+            p.lng, 
             p.created_at,
-            u.name,
-            u.email,
-            u.phone,
-            u.reg_date
+            u.name,       
+            u.email, 
+            u.phone, 
+            u.reg_date    
         FROM tbl_pets p
         JOIN tbl_users u ON p.user_id = u.user_id
+        WHERE 1=1 
     ";
 
-    if (!empty($_GET['search'])) {
+    // 1. Search Logic
+    if (isset($_GET['search']) && !empty($_GET['search'])) {
         $search = $conn->real_escape_string($_GET['search']);
-        $query .= "
-            WHERE p.pet_name LIKE '%$search%'
-               OR p.pet_type LIKE '%$search%'
-               OR p.category LIKE '%$search%'
-               OR p.description LIKE '%$search%'
-        ";
+        $query .= " AND (p.pet_name LIKE '%$search%' OR p.pet_type LIKE '%$search%' OR p.description LIKE '%$search%')";
+    }
+
+    // 2. Filter Logic
+    if (isset($_GET['category']) && !empty($_GET['category']) && $_GET['category'] != 'All') {
+        $category = $conn->real_escape_string($_GET['category']);
+        $query .= " AND p.pet_type = '$category'";
     }
 
     $query .= " ORDER BY p.pet_id DESC";
@@ -47,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
         }
         echo json_encode(["status" => "success", "data" => $data]);
     } else {
-        echo json_encode(["status" => "failed", "data" => []]);
+        echo json_encode(["status" => "success", "data" => []]);
     }
 }
 ?>

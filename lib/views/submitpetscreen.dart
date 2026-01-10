@@ -127,6 +127,7 @@ class _SubmitPetScreenState extends State<SubmitPetScreen> {
                 ),
               ),
               const SizedBox(height: 14),
+              // LATITUDE FIELD
               SizedBox(
                 width: width * 0.9,
                 child: TextField(
@@ -134,30 +135,26 @@ class _SubmitPetScreenState extends State<SubmitPetScreen> {
                   readOnly: true,
                   decoration: _styledInput("Latitude").copyWith(
                     suffixIcon: IconButton(
-                      icon: const Icon(Icons.location_on),
-                      onPressed: () async {
-                        myPosition = await _determinePosition();
-                        latController.text = myPosition.latitude.toString();
-                        setState(() {});
-                      },
+                      icon: const Icon(Icons.location_on, color: Colors.orange),
+                      tooltip: "Get Current Location",
+                      onPressed: _getLocation, // Calls the helper function below
                     ),
                   ),
                 ),
               ),
               const SizedBox(height: 14),
+
+              // LONGITUDE FIELD
               SizedBox(
                 width: width * 0.9,
                 child: TextField(
                   controller: lngController,
-                  readOnly: true,
+                  readOnly: true, // Make it read-only so user must use the button
                   decoration: _styledInput("Longitude").copyWith(
                     suffixIcon: IconButton(
-                      icon: const Icon(Icons.location_on),
-                      onPressed: () async {
-                        myPosition = await _determinePosition();
-                        lngController.text = myPosition.longitude.toString();
-                        setState(() {});
-                      },
+                      icon: const Icon(Icons.location_on, color: Colors.orange),
+                      tooltip: "Get Current Location",
+                      onPressed: _getLocation, // Calls the helper function below
                     ),
                   ),
                 ),
@@ -415,61 +412,87 @@ class _SubmitPetScreenState extends State<SubmitPetScreen> {
 
   void submitPets() {
     List<String> base64Images = [];
+    
+    // 1. Convert images based on platform
     if (kIsWeb) {
-      for (var bytes in webImages) base64Images.add(base64Encode(bytes));
+      for (var bytes in webImages) {
+        base64Images.add(base64Encode(bytes));
+      }
     } else {
-      for (var f in images) base64Images.add(base64Encode(f.readAsBytesSync()));
+      for (var f in images) {
+        base64Images.add(base64Encode(f.readAsBytesSync()));
+      }
     }
 
-    http
-        .post(
-          Uri.parse('${MyConfig.baseUrl}/pawpal/api/submit_pet.php'),
-          body: {
-            'user_id': widget.user?.userId,
-            'pet_name': petNameController.text.trim(),
-            'pet_type': selectedPet,
-            'category': selectedCategory,
-            'description': descriptionController.text.trim(),
-            'images': jsonEncode(base64Images),
-            'lat': latController.text.trim(),
-            'lng': lngController.text.trim(),
-          },
-        )
-        .then((response) {
-          print(response.body);
-          if (response.statusCode == 200) {
-            var res = jsonDecode(response.body);
-            if (mounted) {
-              if (res['status'] == 'success') {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Pet submitted successfully"),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-                Navigator.pop(context);
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(res['message']),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
-            }
+    // 2. Show Loading Dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (c) => const Center(child: CircularProgressIndicator()),
+    );
+
+    print("Submitting to: ${MyConfig.baseUrl}/pawpal/api/submit_pet.php"); // DEBUG PRINT
+
+    http.post(
+      Uri.parse('${MyConfig.baseUrl}/pawpal/api/submit_pet.php'),
+      body: {
+        'user_id': widget.user?.userId,
+        'pet_name': petNameController.text.trim(),
+        'pet_type': selectedPet,
+        'category': selectedCategory,
+        'description': descriptionController.text.trim(),
+        'images': jsonEncode(base64Images),
+        'lat': latController.text.trim().isEmpty ? "0.0" : latController.text.trim(), // Default to 0.0 if empty
+        'lng': lngController.text.trim().isEmpty ? "0.0" : lngController.text.trim(),
+      },
+    ).then((response) {
+      Navigator.pop(context); // Close Loading Dialog
+      
+      print("Response Status: ${response.statusCode}"); // DEBUG PRINT
+      print("Response Body: ${response.body}"); // DEBUG PRINT
+
+      if (response.statusCode == 200) {
+        var res = jsonDecode(response.body);
+        if (mounted) {
+          if (res['status'] == 'success') {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("Pet submitted successfully"),
+                backgroundColor: Colors.green,
+              ),
+            );
+            Navigator.pop(context); // Go back to Home
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(res['message'] ?? "Unknown Error"), backgroundColor: Colors.red),
+            );
           }
-        });
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+           SnackBar(content: Text("Server Error: ${response.statusCode}"), backgroundColor: Colors.red),
+        );
+      }
+    }).catchError((error) {
+      Navigator.pop(context); // Close Loading Dialog
+      print("Error: $error"); // DEBUG PRINT
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Connection Failed: $error"), backgroundColor: Colors.red),
+      );
+    });
   }
 
   Future<Position> _determinePosition() async {
     bool serviceEnabled;
     LocationPermission permission;
 
+    // 1. Check if location services are enabled
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      return Future.error('Location services are disabled.');
+      return Future.error('Location services are disabled. Please enable GPS.');
     }
 
+    // 2. Check permissions
     permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
@@ -480,10 +503,41 @@ class _SubmitPetScreenState extends State<SubmitPetScreen> {
 
     if (permission == LocationPermission.deniedForever) {
       return Future.error(
-        'Location permissions are permanently denied, we cannot request permissions.',
-      );
+          'Location permissions are permanently denied. Please allow location in your browser settings.');
     }
 
-    return await Geolocator.getCurrentPosition();
+    // 3. Get Position (with Web Settings for better compatibility)
+    return await Geolocator.getCurrentPosition(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+      ),
+    );
+  }
+
+  void _getLocation() async {
+    try {
+      // Show loading indicator
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Getting location...")),
+      );
+
+      Position pos = await _determinePosition();
+
+      setState(() {
+        latController.text = pos.latitude.toString();
+        lngController.text = pos.longitude.toString();
+      });
+
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    } catch (e) {
+      print("Location Error: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Error: $e"),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
   }
 }

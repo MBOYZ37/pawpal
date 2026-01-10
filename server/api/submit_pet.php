@@ -1,6 +1,17 @@
 <?php
-header('Content-Type: application/json');
+// --- CORS HEADERS FOR WEB ---
 header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+
+// Handle the "Preflight" check (Browser asks: "Can I send data?")
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+// -----------------------------
+
+header('Content-Type: application/json');
 include_once 'dbconnect.php';
 
 $response = array();
@@ -16,7 +27,7 @@ $lng        = isset($_POST['lng']) ? $_POST['lng'] : '';
 $imagesJson = isset($_POST['images']) ? $_POST['images'] : '[]';
 
 // Validate required fields
-if (empty($user_id) || empty($pet_name) || empty($pet_type) || empty($category) || empty($description) || empty($lat) || empty($lng)) {
+if (empty($user_id) || empty($pet_name) || empty($pet_type) || empty($category) || empty($description)) {
     $response['status'] = 'error';
     $response['message'] = 'Missing required fields';
     echo json_encode($response);
@@ -29,11 +40,14 @@ $uploadedFiles = [];
 
 if (!empty($images) && is_array($images)) {
     foreach ($images as $index => $imgBase64) {
+        // Decode the base64 string
         $imgData = base64_decode($imgBase64);
+        
         if ($imgData !== false) {
             $fileName = 'pet_' . time() . "_$index.png";
             $filePath = '../uploads/' . $fileName;
 
+            // Create uploads folder if not exists
             if (!file_exists('../uploads/')) {
                 mkdir('../uploads/', 0777, true);
             }
@@ -49,7 +63,7 @@ if (!empty($images) && is_array($images)) {
 $imagesStr = implode(',', $uploadedFiles);
 
 // Insert pet into database
-$stmt = $conn->prepare("INSERT INTO pets(user_id, pet_name, pet_type, category, description, images, lat, lng) VALUES(?,?,?,?,?,?,?,?)");
+$stmt = $conn->prepare("INSERT INTO tbl_pets(user_id, pet_name, pet_type, category, description, images, lat, lng) VALUES(?,?,?,?,?,?,?,?)");
 $stmt->bind_param("ssssssss", $user_id, $pet_name, $pet_type, $category, $description, $imagesStr, $lat, $lng);
 
 if ($stmt->execute()) {
@@ -57,7 +71,7 @@ if ($stmt->execute()) {
     $response['message'] = 'Pet submitted successfully';
 } else {
     $response['status'] = 'error';
-    $response['message'] = 'Failed to submit pet';
+    $response['message'] = 'Failed to submit pet: ' . $stmt->error;
 }
 
 $stmt->close();
